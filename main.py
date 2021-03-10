@@ -1,16 +1,14 @@
 import numpy as np
 import tensorflow as tf
-
-from loss.information_gain import InformationGainLoss
-from loss.scheduling import StepDecay
-from nets.model import InformationGainRoutingModel, Routing
 from tqdm import tqdm
 
 import wandb
-
+from loss.information_gain import InformationGainLoss
+from loss.scheduling import StepDecay
+from nets.model import InformationGainRoutingLeNetModel, Routing
 from utils.helpers import routing_method, current_learning_rate, weight_scheduler, reset_metrics
 
-wandb.init(project="information-gain-routing-network", entity="information-gain-routing-network",
+wandb.init(project="information-gain-routing-network-lenet", entity="information-gain-routing-network",
            config="config.yaml")
 print(wandb.config)
 
@@ -20,11 +18,16 @@ if wandb.config["DATASET"] == "fashion_mnist":
     test_x = np.expand_dims(test_x, -1)
     input_shape = (28, 28, 1)
     wandb.config["NUM_CLASSES"] = 10
+elif wandb.config["DATASET"] == "mnist":
+    (train_x, train_y), (test_x, test_y) = tf.keras.datasets.mnist.load_data()
+    train_x = np.expand_dims(train_x, -1)
+    test_x = np.expand_dims(test_x, -1)
+    input_shape = (28, 28, 1)
+    wandb.config["NUM_CLASSES"] = 10
 elif wandb.config["DATASET"] == "cifar100":
     (train_x, train_y), (test_x, test_y) = tf.keras.datasets.cifar100.load_data()
     input_shape = (32, 32, 3)
     wandb.config["NUM_CLASSES"] = 100
-
 else:
     raise NotImplementedError
 
@@ -40,7 +43,7 @@ dataset_train = tf.data.Dataset.from_tensor_slices((train_x, train_y)).shuffle(6
     wandb.config["BATCH_SIZE"])
 dataset_validation = tf.data.Dataset.from_tensor_slices((test_x, test_y)).batch(wandb.config["BATCH_SIZE"])
 
-model = InformationGainRoutingModel(wandb.config)
+model = InformationGainRoutingLeNetModel(wandb.config)
 
 loss_fn = tf.losses.CategoricalCrossentropy(from_logits=True)
 
@@ -108,14 +111,9 @@ for epoch in range(wandb.config["NUM_EPOCHS"]):
 
         if wandb.config["USE_ROUTING"] and wandb.config["DECOUPLE_ROUTING_GRADIENTS"]:
             model_trainable_weights = (model.conv_block_0.trainable_weights +
-                                       model.batch_norm_0.trainable_weights +
                                        model.conv_block_1.trainable_weights +
-                                       model.batch_norm_1.trainable_weights +
-                                       model.conv_block_2.trainable_weights +
-                                       model.batch_norm_2.trainable_weights +
                                        model.fc_0.trainable_weights +
-                                       model.fc_1.trainable_weights +
-                                       model.fc_2.trainable_weights)
+                                       model.fc_1.trainable_weights)
 
             grads = tape.gradient(classification_loss, model_trainable_weights)
             optimizer.apply_gradients(zip(grads, model_trainable_weights))

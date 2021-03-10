@@ -1,6 +1,6 @@
 DATASET:
-  desc: fashion_mnist or cifar100
-  value: fashion_mnist
+  desc: fashion_mnist ,mnist or cifar100
+  value: mnist
 NUM_EPOCHS:
   value: 100
 BATCH_SIZE:
@@ -34,11 +34,9 @@ ROUTING_EARLY_STOPPING_STEP:
   desc: Number of steps before stopping training of the routing layers, if EarlyStopping decay method is used
   value: 0
 CNN_0:
-  value: 32
+  value: 20
 CNN_1:
-  value: 64
-CNN_2:
-  value: 128
+  value: 50
 TAU_INITIAL:
   value: 25
 TAU_DECAY_RATE:
