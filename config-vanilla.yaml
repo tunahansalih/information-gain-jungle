@@ -1,6 +1,6 @@
 DATASET:
   desc: fashion_mnist or cifar100
-  value: fashion_mnist
+  value: mnist
 NUM_EPOCHS:
   value: 100
 BATCH_SIZE:
@@ -12,10 +12,8 @@ LR_INITIAL:
 MOMENTUM:
   value: 0.9
 DROPOUT_RATE:
-  value: 0.55
+  value: 0.35
 CNN_0:
-  value: 32
+  value: 20
 CNN_1:
-  value: 32
-CNN_2:
-  value: 32
+  value: 50
