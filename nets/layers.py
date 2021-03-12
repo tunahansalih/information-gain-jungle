@@ -1,12 +1,13 @@
 import tensorflow as tf
-from tensorflow.keras import layers
+from tensorflow.keras import layers, regularizers
 
 
 class ConvolutionalBlock(layers.Layer):
 
-    def __init__(self, filters, kernel_size, padding="same"):
+    def __init__(self, filters, kernel_size, l2_weight_decay, padding="same"):
         super(ConvolutionalBlock, self).__init__()
-        self.conv = layers.Conv2D(filters, kernel_size, padding=padding)
+        self.conv = layers.Conv2D(filters, kernel_size, padding=padding,
+                                  kernel_regularizer=regularizers.l2(l2_weight_decay))
         self.relu = layers.ReLU()
         self.pool = layers.MaxPool2D((2, 2))
 
@@ -28,11 +29,11 @@ class RandomRoutingBlock(layers.Layer):
 
 
 class InformationGainRoutingBlock(layers.Layer):
-    def __init__(self, routes):
+    def __init__(self, routes, l2_weight_decay):
         super(InformationGainRoutingBlock, self).__init__()
         self.routes = routes
         self.flatten = layers.Flatten()
-        self.fc0 = layers.Dense(64, activation=tf.nn.relu)
+        self.fc0 = layers.Dense(64, activation=tf.nn.relu, kernel_regularizer=tf.keras.regularizers.l2(l2_weight_decay))
         self.routing = layers.Dense(self.routes, activation=None)
 
     def call(self, inputs, is_training=True):

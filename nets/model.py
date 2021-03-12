@@ -2,7 +2,7 @@ from enum import Enum
 
 import tensorflow as tf
 from tensorflow.keras.layers import BatchNormalization
-
+from tensorflow.keras.regularizers import l2
 from nets.layers import InformationGainRoutingBlock, RandomRoutingBlock, ConvolutionalBlock, RoutingMaskLayer, \
     DenseRoutingMaskLayer
 
@@ -95,23 +95,27 @@ class InformationGainRoutingLeNetModel(tf.keras.models.Model):
     def __init__(self, config):
         super(InformationGainRoutingLeNetModel, self).__init__()
 
-        self.conv_block_0 = ConvolutionalBlock(filters=config["CNN_0"], kernel_size=(5, 5), padding="same")
+        self.conv_block_0 = ConvolutionalBlock(filters=config["CNN_0"], kernel_size=(5, 5),
+                                               l2_weight_decay=config["L2_WEIGHT_DECAY"], padding="same")
         if config["USE_ROUTING"]:
-            self.routing_block_0 = InformationGainRoutingBlock(routes=config["NUM_ROUTES_0"])
+            self.routing_block_0 = InformationGainRoutingBlock(routes=config["NUM_ROUTES_0"],
+                                                               l2_weight_decay=config["L2_WEIGHT_DECAY"])
             self.random_routing_block_0 = RandomRoutingBlock(routes=config["NUM_ROUTES_0"])
             self.routing_mask_layer_0 = RoutingMaskLayer(routes=config["NUM_ROUTES_0"],
                                                          gumbel=config["ADD_GUMBEL_NOISE"])
 
-        self.conv_block_1 = ConvolutionalBlock(filters=config["CNN_1"], kernel_size=(5, 5), padding="same")
+        self.conv_block_1 = ConvolutionalBlock(filters=config["CNN_1"], kernel_size=(5, 5),
+                                               l2_weight_decay=config["L2_WEIGHT_DECAY"], padding="same")
         if config["USE_ROUTING"]:
-            self.routing_block_1 = InformationGainRoutingBlock(routes=config["NUM_ROUTES_1"])
+            self.routing_block_1 = InformationGainRoutingBlock(routes=config["NUM_ROUTES_1"],
+                                                               l2_weight_decay=config["L2_WEIGHT_DECAY"])
             self.random_routing_block_1 = RandomRoutingBlock(routes=config["NUM_ROUTES_1"])
             self.routing_mask_layer_1 = DenseRoutingMaskLayer(routes=config["NUM_ROUTES_1"],
                                                               gumbel=config["ADD_GUMBEL_NOISE"])
 
         self.flatten = tf.keras.layers.Flatten()
 
-        self.fc_0 = tf.keras.layers.Dense(500, activation=tf.nn.relu)
+        self.fc_0 = tf.keras.layers.Dense(500, activation=tf.nn.relu, kernel_regularizer=l2(config["L2_WEIGHT_DECAY"]))
         self.do_0 = tf.keras.layers.Dropout(config["DROPOUT_RATE"])
         self.fc_1 = tf.keras.layers.Dense(config["NUM_CLASSES"])
 

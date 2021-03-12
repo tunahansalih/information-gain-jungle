@@ -51,7 +51,7 @@ def weight_scheduler(config):
 
 
 def reset_metrics(metrics_dict):
-    for metric in ["Accuracy", "TotalLoss", "Routing0Loss", "Routing1Loss", "ClassificationLoss"]:
+    for metric in ["Accuracy", "TotalLoss", "Routing0Loss", "Routing1Loss", "ClassificationLoss", "ModelLoss"]:
         metrics_dict[metric].reset_states()
     for metric in ["Route0", "Route1"]:
         for metric_route in metrics_dict[metric]:

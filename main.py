@@ -68,7 +68,8 @@ metrics = {"Route0": [tf.keras.metrics.MeanTensor() for i in range(wandb.config[
            "TotalLoss": tf.keras.metrics.Mean(),
            "Routing0Loss": tf.keras.metrics.Mean(),
            "Routing1Loss": tf.keras.metrics.Mean(),
-           "ClassificationLoss": tf.keras.metrics.Mean()}
+           "ClassificationLoss": tf.keras.metrics.Mean(),
+           "ModelLoss":tf.keras.metrics.Mean()}
 
 if wandb.config["USE_ROUTING"]:
     weight_scheduler_0, weight_scheduler_1 = weight_scheduler(wandb.config)
@@ -101,13 +102,14 @@ for epoch in range(wandb.config["NUM_EPOCHS"]):
             routing_1_loss = 0
             route_0, route_1, logits = model(x_batch_train, routing=current_routing, temperature=tau, is_training=True)
             classification_loss = loss_fn(y_batch_train, logits)
+            model_losses = tf.reduce_sum(model.losses)
 
             if wandb.config["USE_ROUTING"] and current_routing == Routing.INFORMATION_GAIN_ROUTING:
                 route_0 = tf.nn.softmax(route_0, axis=-1)
                 route_1 = tf.nn.softmax(route_1, axis=-1)
                 routing_0_loss = information_gain_loss_weight_0 * information_gain_0_loss_fn(y_batch_train, route_0)
                 routing_1_loss = information_gain_loss_weight_1 * information_gain_1_loss_fn(y_batch_train, route_1)
-            loss_value = classification_loss + routing_0_loss + routing_1_loss
+            loss_value = classification_loss + routing_0_loss + routing_1_loss + model_losses
 
         if wandb.config["USE_ROUTING"] and wandb.config["DECOUPLE_ROUTING_GRADIENTS"]:
             model_trainable_weights = (model.conv_block_0.trainable_weights +
@@ -135,6 +137,7 @@ for epoch in range(wandb.config["NUM_EPOCHS"]):
         metrics["Routing0Loss"].update_state(routing_0_loss)
         metrics["Routing1Loss"].update_state(routing_1_loss)
         metrics["ClassificationLoss"].update_state(classification_loss)
+        metrics["ModelLoss"].update_state(model_losses)
 
         # Log metrics
         if step % 100 == 0:
@@ -145,6 +148,7 @@ for epoch in range(wandb.config["NUM_EPOCHS"]):
 
     wandb.log({"Training/TotalLoss": metrics["TotalLoss"].result().numpy(),
                "Training/ClassificationLoss": metrics["ClassificationLoss"].result().numpy(),
+               "Training/ModelLoss": metrics["ModelLoss"].result().numpy(),
                "Training/Routing_0_Loss": metrics["Routing0Loss"].result().numpy(),
                "Training/Routing_1_Loss": metrics["Routing1Loss"].result().numpy(),
                "Training/Routing_0_Loss_Weight": information_gain_loss_weight_0,
